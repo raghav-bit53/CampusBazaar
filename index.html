@@ -1248,6 +1248,7 @@
                         <div class="upload-hint">JPG, PNG, WEBP (Max 5MB)</div>
                     </div>
                     <input type="file" id="imageInput" accept="image/*" style="display:none" onchange="handleImageUpload(event)">
+                    <input type="file" id="editImageInput" accept="image/*" style="display:none" onchange="handleEditImageUpload(event)">
                     <div class="image-preview-wrap" style="width:100%">
                         <img id="imagePreview" src="" alt="Preview">
                         <button type="button" class="remove-img-btn" id="removeImgBtn" onclick="removeImage()">✕</button>
@@ -1404,6 +1405,216 @@
 // =============================================
 
 let allProducts = [];
+const defaultSellerPhones = ['7876706196', '9015300296'];
+const placeholderImageCache = {};
+
+function getPlaceholderImage(title, background = '#1f2937', color = '#ffffff') {
+    const key = `${title}|${background}|${color}`;
+    if (placeholderImageCache[key]) return placeholderImageCache[key];
+
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="200"><rect width="100%" height="100%" fill="${background}"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="${color}" font-family="Segoe UI, sans-serif" font-size="22">${title}</text></svg>`;
+    const dataUri = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
+    placeholderImageCache[key] = dataUri;
+    return dataUri;
+}
+
+const defaultProducts = [
+    {
+        id: 'prod-001',
+        title: 'Xiaomi 10000mAh Power Bank',
+        image: 'https://drive.google.com/file/d/1AFBLYNYWAHdMeZ90cLsND6ENcHkHlzGU/view?usp=sharing',
+        category: 'Electronics',
+        condition: 'Good',
+        price: 399,
+        originalPrice: 899,
+        description: 'Compact Xiaomi power bank with reliable charging and dual USB output. Light surface wear, fully working for campus travel and study sessions.',
+        seller: 'Rohan Verma',
+        location: 'CD',
+        timestamp: Date.now() - 1000 * 60 * 60 * 5,
+        negotiable: true,
+        sold: false
+    },
+    {
+        id: 'prod-002',
+        title: 'Olive Green Winter Sweater',
+        image: 'https://drive.google.com/file/d/1M1JiryqlQ1GiPq4hUkfl__LmaN5jmCin/view?usp=sharing',
+        category: 'Clothing',
+        condition: 'Good',
+        price: 299,
+        originalPrice: 799,
+        description: 'Warm olive knit sweater with reinforced elbow patches. Gently used and perfect for chilly campus evenings.',
+        seller: 'Anjali Chaudhary',
+        location: 'Hostel',
+        timestamp: Date.now() - 1000 * 60 * 60 * 8,
+        negotiable: true,
+        sold: false
+    },
+    {
+        id: 'prod-003',
+        title: 'Puma Black Campus Backpack',
+        image: 'https://drive.google.com/file/d/1n0ElbymEPVfeAQ3OxQBXVajWBfAENOqp/view?usp=sharing',
+        category: 'Essentials',
+        condition: 'Good',
+        price: 799,
+        originalPrice: 1599,
+        description: 'Stylish Puma backpack with padded laptop compartment and strong zippers. Great for college, travel and everyday use.',
+        seller: 'Nikhil Singh',
+        location: 'Green Building',
+        timestamp: Date.now() - 1000 * 60 * 60 * 12,
+        negotiable: false,
+        sold: false
+    },
+    {
+        id: 'prod-004',
+        title: 'UFC Fight Poster Wall Set',
+        image: 'https://via.placeholder.com/400x200/1e1e1e/ffffff?text=Fight+Poster+Set',
+        category: 'Sports',
+        condition: 'Good',
+        price: 249,
+        originalPrice: 499,
+        description: 'Decorative fight poster collage for sports enthusiasts. Cleanly cut and ready to hang in a room or study area.',
+        seller: 'Mayank Mehta',
+        location: 'shiv shakti pg',
+        timestamp: Date.now() - 1000 * 60 * 60 * 14,
+        negotiable: true,
+        sold: false
+    },
+    {
+        id: 'prod-005',
+        title: 'Single Burner Electric Stove',
+        image: 'https://via.placeholder.com/400x200/8b5a2b/ffffff?text=Electric+Stove',
+        category: 'Essentials',
+        condition: 'Fair',
+        price: 299,
+        originalPrice: 699,
+        description: 'Portable single electric burner for quick cooking. Works well, has normal signs of use and is ideal for hostel kitchens.',
+        seller: 'Priya Kapoor',
+        location: 'Hostel',
+        timestamp: Date.now() - 1000 * 60 * 60 * 18,
+        negotiable: true,
+        sold: false
+    },
+    {
+        id: 'prod-006',
+        title: 'Purple Travel Hair Dryer',
+        image: 'https://via.placeholder.com/400x200/7c4dff/ffffff?text=Hair+Dryer',
+        category: 'Essentials',
+        condition: 'Good',
+        price: 249,
+        originalPrice: 599,
+        description: 'Compact travel hair dryer in purple. Runs well and is easy to carry for trips or daily use.',
+        seller: 'Shreya Gupta',
+        location: 'Hostel',
+        timestamp: Date.now() - 1000 * 60 * 60 * 20,
+        negotiable: false,
+        sold: false
+    },
+    {
+        id: 'prod-007',
+        title: 'Era Steam Iron',
+        image: 'https://drive.google.com/file/d/1l5HGvVL6sX3WO0eaQ00a3Sv2ESwqmH8s/view?usp=sharing',
+        category: 'Essentials',
+        condition: 'Good',
+        price: 399,
+        originalPrice: 799,
+        description: 'Lightly used steam iron with a clean soleplate. Perfect for keeping uniforms and shirts wrinkle-free.',
+        seller: 'Aakash Roy',
+        location: 'Joyna villa',
+        timestamp: Date.now() - 1000 * 60 * 60 * 24,
+        negotiable: true,
+        sold: false
+    },
+    {
+        id: 'prod-008',
+        title: 'Foldable Study Table',
+        image: 'https://drive.google.com/file/d/1Vxs0KfGKKDGDiKr4kFc3ITW-Z4Z15ICS/view?usp=sharing',
+        category: 'Essentials',
+        condition: 'Good',
+        price: 899,
+        originalPrice: 1799,
+        description: 'Sturdy foldable table ideal for studying and laptops. Easy to move and store when not in use.',
+        seller: 'Riya Nair',
+        location: 'Chauhan pg',
+        timestamp: Date.now() - 1000 * 60 * 60 * 26,
+        negotiable: false,
+        sold: false
+    },
+    {
+        id: 'prod-009',
+        title: 'Magnetic Wall Whiteboard',
+        image: 'https://drive.google.com/file/d/1EJsuc1GH4ovo4uRt45FOyoedMLCO3fvW/view?usp=sharing',
+        category: 'Essentials',
+        condition: 'Good',
+        price: 349,
+        originalPrice: 699,
+        description: 'Large wall-mounted whiteboard with smooth writing surface. Includes durable frame and is perfect for notes or study planning.',
+        seller: 'Sakshi Jain',
+        location: 'Kanwar Building',
+        timestamp: Date.now() - 1000 * 60 * 60 * 30,
+        negotiable: true,
+        sold: false
+    },
+    {
+        id: 'prod-010',
+        title: 'Silver Chronograph Watch',
+        image: 'https://drive.google.com/file/d/1dKAep4fDRcNOzmtH1HiRhsPB-_2ILOw-/view?usp=sharing',
+        category: 'Clothing',
+        condition: 'Good',
+        price: 599,
+        originalPrice: 1299,
+        description: 'Stylish silver analog watch with metal strap and chronograph dials. Great as a daily wear accessory.',
+        seller: 'Yash Patel',
+        location: 'sharma pg',
+        timestamp: Date.now() - 1000 * 60 * 60 * 33,
+        negotiable: false,
+        sold: false
+    },
+    {
+        id: 'prod-011',
+        title: 'DSA Notes — Data Structures & Algorithms',
+        image: 'https://drive.google.com/file/d/1BNIoLV9KvLYFD5A5PpL8mbEOI-fqlws4/view?usp=sharing',
+        category: 'Books',
+        condition: 'Good',
+        price: 249,
+        originalPrice: 599,
+        description: 'Complete DSA notes for B.Tech CSE placement preparation. Covers arrays, strings, linked lists, stacks, queues, trees, graphs, DP and top interview questions.',
+        seller: 'Campus Study Hub',
+        location: 'cd building',
+        timestamp: Date.now() - 1000 * 60 * 60 * 36,
+        negotiable: true,
+        sold: false
+    },
+    {
+        id: 'prod-012',
+        title: 'DBMS Notes — Database Management Systems',
+        image: 'https://drive.google.com/file/d/1BSUB_7x7uIdnAtQzQXk1N8ga02AssF_k/view?usp=sharing',
+        category: 'Books',
+        condition: 'Good',
+        price: 229,
+        originalPrice: 499,
+        description: 'Concise DBMS notes with ER diagrams, normalization, SQL, transactions, indexing and storage architecture. Ideal for semester exams and placements.',
+        seller: 'Campus Study Hub',
+        location: 'KD building',
+        timestamp: Date.now() - 1000 * 60 * 60 * 40,
+        negotiable: true,
+        sold: false
+    },
+    {
+        id: 'prod-013',
+        title: 'Mini Camera Module Board',
+        image: 'https://via.placeholder.com/400x200/000000/ffffff?text=Camera+Module',
+        category: 'Projects',
+        condition: 'Good',
+        price: 349,
+        originalPrice: 699,
+        description: 'Compact camera module board for electronics projects, programming and prototype builds. Works well for Arduino/Raspberry Pi.',
+        seller: 'Arjun Desai',
+        location: 'KD building',
+        timestamp: Date.now() - 1000 * 60 * 60 * 45,
+        negotiable: false,
+        sold: false
+    }
+];
 let currentFilter = 'all';
 let currentSearch = '';
 let currentSort = 'newest';
@@ -1430,9 +1641,25 @@ function init() {
 }
 
 function loadData() {
-    // Load user products from local storage
+    // Load user products from local storage or initialize default listings.
     const saved = localStorage.getItem('campusBazaarProducts');
-    allProducts = saved ? JSON.parse(saved) : [];
+    let parsedProducts = null;
+
+    try {
+        parsedProducts = saved ? JSON.parse(saved) : null;
+    } catch (error) {
+        parsedProducts = null;
+    }
+
+    if (Array.isArray(parsedProducts) && parsedProducts.length > 0) {
+        allProducts = parsedProducts;
+    } else {
+        allProducts = defaultProducts.map(product => ({
+            ...product,
+            phone: defaultSellerPhones[Math.floor(Math.random() * defaultSellerPhones.length)]
+        }));
+        localStorage.setItem('campusBazaarProducts', JSON.stringify(allProducts));
+    }
 
     // Load wishlist
     const savedWishlist = localStorage.getItem('campusBazaarWishlist');
@@ -1514,9 +1741,9 @@ function createProductCard(p, index) {
     return `
         <div class="product-card" onclick="openDetailModal('${p.id}')" style="animation-delay: ${index * 0.05}s">
             <div class="card-image-wrap">
-                <img class="card-image" src="${p.image || 'https://via.placeholder.com/400x200?text=No+Image'}" 
-                     alt="${escHtml(p.title)}" 
-                     onerror="this.src='https://via.placeholder.com/400x200?text=📦'">
+                 <img class="card-image" src="${p.image || getPlaceholderImage(p.title)}" 
+                     alt="${escHtml(p.title)}" loading="lazy"
+                     onerror="handleImageError(this)">
                 <div class="card-category-badge">${escHtml(p.category)}</div>
                 <button class="wishlist-btn ${isWishlisted ? 'active' : ''}" 
                         onclick="event.stopPropagation(); toggleWishlist('${p.id}')" 
@@ -1569,9 +1796,9 @@ function openDetailModal(id) {
     document.getElementById('detailModalTitle').textContent = product.title;
     document.getElementById('detailContent').innerHTML = `
         <div class="detail-image-wrap">
-            <img class="detail-image" src="${product.image || 'https://via.placeholder.com/400x300?text=📦'}" 
-                 alt="${escHtml(product.title)}"
-                 onerror="this.src='https://via.placeholder.com/400x300?text=No+Image'">
+              <img class="detail-image" src="${product.image || getPlaceholderImage(product.title, '#ffffff', '#000000')}" 
+                  alt="${escHtml(product.title)}" loading="lazy"
+                  onerror="handleImageError(this)">
             ${product.sold ? `<div class="card-sold-badge"><div class="card-sold-label">SOLD</div></div>` : ''}
         </div>
 
@@ -1623,6 +1850,7 @@ function openDetailModal(id) {
                 <button class="action-btn ${isWishlisted ? 'action-btn-danger' : 'action-btn-primary'}" onclick="toggleWishlistFromDetail('${id}')">
                     ${isWishlisted ? '💔 Remove Saved' : '❤️ Save Item'}
                 </button>
+                <button class="action-btn action-btn-outline" onclick="triggerEditImageInput('${id}')">🖼️ Edit Photo</button>
             </div>
             <div class="seller-actions-box">
                 <span class="seller-actions-label">🔒 Seller Actions — verified by phone number</span>
@@ -1704,6 +1932,73 @@ function removeImage() {
     document.getElementById('imagePreview').style.display = 'none';
     document.getElementById('removeImgBtn').style.display = 'none';
     document.getElementById('imageInput').value = '';
+}
+
+let editingProductId = null;
+
+function triggerEditImageInput(id) {
+    editingProductId = id;
+    const input = document.getElementById('editImageInput');
+    if (input) input.click();
+}
+
+function handleEditImageUpload(event) {
+    // helper to handle broken image logs
+}
+
+function handleImageError(img) {
+    try {
+        console.warn('Image failed to load:', img.src);
+        img.onerror = null;
+        img.src = getPlaceholderImage(img.alt || 'Image', '#e5e7eb', '#4b5563');
+        img.style.display = 'block';
+        img.classList.add('image-failed');
+    } catch (e) {
+        // ignore
+    }
+}
+
+function handleEditImageUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) { showToast('Please upload a valid image file.', 'error'); return; }
+    if (file.size > 5 * 1024 * 1024) { showToast('Image size must be under 5MB.', 'error'); return; }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const dataUrl = e.target.result;
+        const prod = allProducts.find(p => p.id === editingProductId);
+        if (!prod) { showToast('Could not find the product to update.', 'error'); editingProductId = null; return; }
+
+        prod.image = dataUrl;
+
+        // Update localStorage — keep the saved array in sync if present
+        try {
+            const saved = localStorage.getItem('campusBazaarProducts');
+            if (saved) {
+                const arr = JSON.parse(saved);
+                const idx = arr.findIndex(p => p.id === editingProductId);
+                if (idx !== -1) { arr[idx].image = dataUrl; localStorage.setItem('campusBazaarProducts', JSON.stringify(arr)); }
+                else { localStorage.setItem('campusBazaarProducts', JSON.stringify(allProducts)); }
+            } else {
+                localStorage.setItem('campusBazaarProducts', JSON.stringify(allProducts));
+            }
+        } catch (err) {
+            localStorage.setItem('campusBazaarProducts', JSON.stringify(allProducts));
+        }
+
+        renderProducts();
+        // If detail modal is open for this product, refresh it
+        const detailModal = document.getElementById('detailModal');
+        if (detailModal && detailModal.classList.contains('active')) openDetailModal(editingProductId);
+
+        showToast('✅ Photo updated successfully.', 'success');
+        editingProductId = null;
+        // clear file input
+        event.target.value = '';
+    };
+    reader.readAsDataURL(file);
 }
 
 function handleDragOver(e) {
